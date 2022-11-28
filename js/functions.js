@@ -160,13 +160,13 @@ function fileManager(data) {
             for (let i = 0; i < items.length; i++) {
                 switch (items[i].type) {
                     case "FOLDER":
-                        $(`#_filesItemsStructure`).append(`<div style="width: 100%; height: 35px; background-color: #B4B4B4; margin-top: 2px;">${items[i].name}</div>`)
+                        $(`#_filesItemsStructure`).append(`<div style="width: calc(100% - 10px); height: 35px; background-color: #B4B4B4; margin-left: 5px; margin-bottom: 5px; border-radius: 3px;">${items[i].name}</div>`)
                         if (items[i].items.length >= 1) {
                             recursive(items[i].items)
                         }
                         break
                     case "FILE":
-                        $(`#_filesItemsStructure`).append(`<div style="width: 100%; height: 35px; background-color: #83CBCF; margin: 2px 0px;"></div>`)
+                        $(`#_filesItemsStructure`).append(`<div style="width: calc(100% - 10px); height: 35px; background-color: #83CBCF; margin: 2px 0px;"></div>`)
                 }
             }
         }
