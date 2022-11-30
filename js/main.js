@@ -13,6 +13,9 @@ fileManager({
     borderColor: "white",
     borderShow: true,
     buttonHeight: 25,
+    cardTextHeight: 20,
+    cardHeight: 25,
+    cardMaxTextLength: 10,
     onAddFolderFocus: () => {
         console.log("Add Folder !")
     },
@@ -24,5 +27,8 @@ fileManager({
     },
     onGoForwardFocus: () => {
         console.log("Going forward !")
+    },
+    onDeleteCardFocus: (folder) => {
+        console.log(folder)
     }
 })
