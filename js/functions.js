@@ -24,6 +24,7 @@ function fileManager(data) {
     let cardFileBackgroundColor = data.cardBackgroundColor || "##87BC86"
     let cardHeight = data.cardHeight || ""
     let cardMaxTextLength = data.cardMaxTextLength || 15
+    let cardWidth = data.cardWidth || 250
 
     const deleteFolderById = (id) => {
         let array = []
@@ -31,12 +32,12 @@ function fileManager(data) {
         const recursive = (items) => {
             for (let i = 0; i < items.length; i++) {
                 if (items[i].type === "FOLDER" && items[i].id !== id && !find) {
-                    array.push(items[i].id)
+                    array.push(i)
                     recursive(items[i].items)
                 }
                 else if (items[i].type === "FOLDER" && items[i].id === id && !find) {
                     find = true
-                    array.push(items[i].id)
+                    array.push(i)
                 }
             }
             if (!find) {
@@ -45,15 +46,13 @@ function fileManager(data) {
         }
         recursive(items)
 
-        //TROUVER UN MOYEN DE SUPPRIMER UN ELEMENT D'UN TABLEAU A DIMENSIONS INCONNU CI-DESSOUS !
-        for (let n = 0; n < array.length; n++) {
-            for (let i = 0; i < items.length; i++) {
-                if (n >= array.length) {
-
-                }
-            }
+        let newStr = ""
+        for (let i = 0; i < array.length; i++) {
+            newStr += `items[${array[i]}].`
         }
-        //------------------------------------------------
+        newStr = newStr.slice(0, -1)
+        items = Function(`"use strict";const items = ${JSON.stringify(items)};${newStr} = [];return items;`)()
+        updateFilesItemsStructure()
     }
     const getFolderById = (id) => {
         let findId = -1
@@ -212,18 +211,21 @@ function fileManager(data) {
 
     const updateFilesItemsStructure = () => {
         $(`#_filesItemsStructure`).children().remove()
+        let margin = 0
+        const decal = 15
         const recursive = (items) => {
+            margin++
             for (let i = 0; i < items.length; i++) {
                 switch (items[i].type) {
                     case "FOLDER":
-                        $(`#_filesItemsStructure`).append(`<div style="width: calc(100% - 10px); height: ${cardHeight}px; background-color: ${cardFolderBackgroundColor}; margin-left: 5px; margin-bottom: 5px; border-radius: ${borderRadius}px;">
+                        $(`#_filesItemsStructure`).append(`<div style="width: ${cardWidth}px; height: ${cardHeight}px; background-color: ${cardFolderBackgroundColor}; margin-left: calc((5px + ${(margin * decal)}px) - ${decal}px); margin-bottom: 5px; border-radius: ${borderRadius}px;">
                             <div style="display: flex;justify-content: center; align-items: center;">
                                 <label>${manageCardName(items[i].name)}</label>
                             </div>
                             
-                            <div class="_deleteCard_" id="${items[i].id}" style="border-radius: 3px; width: 15px; height: 15px; border: solid ${borderColor} 2px; padding: 0px; float: right; margin-right: 5px; margin-top: -${cardTextHeight}px; display: flex;">
+                            <!-- <div class="_deleteCard_" id="${items[i].id}" style="border-radius: 3px; width: 15px; height: 15px; border: solid ${borderColor} 2px; padding: 0px; float: right; margin-right: 5px; margin-top: -${cardTextHeight}px; display: flex;">
                                 <label style="font-size: 15px; padding: 0px; pointer-events: none; margin-left: 4px; margin-top: -2px;">x</label>
-                            </div>
+                            </div> -->
                         </div>`)
                         if (items[i].items.length >= 1) {
                             recursive(items[i].items)
@@ -233,6 +235,7 @@ function fileManager(data) {
                         $(`#_filesItemsStructure`).append(`<div style="width: calc(100% - 10px); height: 35px; background-color: #83CBCF; margin: 2px 0px;"></div>`)
                 }
             }
+            margin--
         }
         recursive(items)
         $('._deleteCard_').on('mouseenter', (e) => {
