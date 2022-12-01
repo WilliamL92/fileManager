@@ -27,60 +27,38 @@ function fileManager(data) {
     let cardWidth = data.cardWidth || 250
 
     const editFolderById = (id, obj) => {
-        let array = []
-        let find = false
         const recursive = (items) => {
             for (let i = 0; i < items.length; i++) {
-                if (items[i].type === "FOLDER" && items[i].id !== id && !find) {
-                    array.push(i)
-                    recursive(items[i].items)
+                if (items[i].type === "FOLDER" && items[i].id === id) {
+                    items[i] = { ...items[i], ...obj }
                 }
-                else if (items[i].type === "FOLDER" && items[i].id === id && !find) {
-                    find = true
-                    array.push(i)
-                }
-            }
-            if (!find) {
-                array = []
+                recursive(items[i].items)
             }
         }
         recursive(items)
-
-        let newStr = ""
-        for (let i = 0; i < array.length; i++) {
-            newStr += `items[${array[i]}].`
-        }
-        newStr = newStr.slice(0, -1)
-        items = Function(`"use strict";const items = ${JSON.stringify(items)};${newStr} = {...${newStr}, ...${JSON.stringify(obj)}};return items;`)()
         updateFilesItemsStructure()
     }
 
     const deleteFolderById = (id) => {
-        let array = []
-        let find = false
-        const recursive = (items) => {
-            for (let i = 0; i < items.length; i++) {
-                if (items[i].type === "FOLDER" && items[i].id !== id && !find) {
-                    array.push(i)
-                    recursive(items[i].items)
-                }
-                else if (items[i].type === "FOLDER" && items[i].id === id && !find) {
-                    find = true
-                    array.push(i)
+        const _index = items.findIndex(e => e.id === id)
+        if (_index === -1) {
+            let lastRef = undefined
+            const recursive = (items) => {
+                for (let i = 0; i < items.length; i++) {
+                    if (items[i].type === "FOLDER" && items[i].id === id) {
+                        lastRef.items = []
+                    }
+                    else {
+                        lastRef = items[i]
+                        recursive(items[i].items)
+                    }
                 }
             }
-            if (!find) {
-                array = []
-            }
+            recursive(items)
         }
-        recursive(items)
-
-        let newStr = ""
-        for (let i = 0; i < array.length; i++) {
-            newStr += `items[${array[i]}].`
+        else {
+            items.splice(_index, 1)
         }
-        newStr = newStr.slice(0, -1)
-        items = Function(`"use strict";const items = ${JSON.stringify(items)};${newStr} = [];return items;`)()
         updateFilesItemsStructure()
     }
     const getFolderById = (id) => {
@@ -209,6 +187,7 @@ function fileManager(data) {
             ]
         }
     ]
+
     let pathId = 2
 
     const virtualPath = getPathName(1)
@@ -342,7 +321,7 @@ function fileManager(data) {
                 break
         }
     })
-
+    deleteFolderById(2)
     return {
 
     }
