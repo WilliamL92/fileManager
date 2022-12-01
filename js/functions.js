@@ -26,6 +26,35 @@ function fileManager(data) {
     let cardMaxTextLength = data.cardMaxTextLength || 15
     let cardWidth = data.cardWidth || 250
 
+    const editFolderById = (id, obj) => {
+        let array = []
+        let find = false
+        const recursive = (items) => {
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].type === "FOLDER" && items[i].id !== id && !find) {
+                    array.push(i)
+                    recursive(items[i].items)
+                }
+                else if (items[i].type === "FOLDER" && items[i].id === id && !find) {
+                    find = true
+                    array.push(i)
+                }
+            }
+            if (!find) {
+                array = []
+            }
+        }
+        recursive(items)
+
+        let newStr = ""
+        for (let i = 0; i < array.length; i++) {
+            newStr += `items[${array[i]}].`
+        }
+        newStr = newStr.slice(0, -1)
+        items = Function(`"use strict";const items = ${JSON.stringify(items)};${newStr} = {...${newStr}, ...${JSON.stringify(obj)}};return items;`)()
+        updateFilesItemsStructure()
+    }
+
     const deleteFolderById = (id) => {
         let array = []
         let find = false
@@ -114,16 +143,19 @@ function fileManager(data) {
             name: "1 elem",
             id: 0,
             type: "FOLDER",
+            active: false,
             items: [
                 {
                     name: "2 elem",
                     type: "FOLDER",
                     id: 1,
+                    active: false,
                     items: [
                         {
                             name: "3 elem ok !!",
                             type: "FOLDER",
                             id: 2,
+                            active: false,
                             items: []
                         }
                     ]
@@ -134,16 +166,19 @@ function fileManager(data) {
             name: "1 autre elem",
             type: "FOLDER",
             id: 3,
+            active: false,
             items: [
                 {
                     name: "2 autre :o elem",
                     type: "FOLDER",
                     id: 4,
+                    active: false,
                     items: [
                         {
                             name: "3 finished ??",
                             type: "FOLDER",
                             id: 5,
+                            active: false,
                             items: []
                         }
                     ]
@@ -154,16 +189,19 @@ function fileManager(data) {
             name: "1autreee",
             type: "FOLDER",
             id: 6,
+            active: false,
             items: [
                 {
                     name: ":)",
                     type: "FOLDER",
                     id: 7,
+                    active: false,
                     items: [
                         {
                             name: "cc",
                             type: "FOLDER",
                             id: 8,
+                            active: false,
                             items: []
                         }
                     ]
@@ -177,7 +215,7 @@ function fileManager(data) {
 
     let fileManagerName = "__Item__FileManager__"
     $(`#${container}`).append(
-        `<div style="width: 100%; height: 100%; box-sizing: border-box; border-radius: ${borderRadius}px; border: ${outerBorderShow ? `solid ${borderColor} ${borderWidth}px;` : "none"}; font-size: ${textHeight}px; font-family: ${textStyle}; color: ${textColor}; border-color: ${borderColor}">
+        `<div style="width: 100%; height: 100%; box-sizing: border-box; border-radius: ${borderRadius}px; border: ${outerBorderShow ? `solid ${borderColor} ${borderWidth}px;` : "none"}; font-size: ${textHeight}px; font-family: ${textStyle}; color: ${textColor}; border-color: ${borderColor}; user-select: none;;">
             <div style="width: calc(100% + 1px); height: ${topPanelHeight}px; box-sizing: border-box; border-radius: ${borderRadius}px; display: flex; align-items: center; padding: 5px; background-color: ${topBackgroundColor}; border-color: ${borderColor}; border: ${borderShow ? `solid ${borderColor} ${borderWidth}px` : "none"};">
                 <label>${titleTop}</label>
                 <div class="${fileManagerName}" id="__addFolder" style="width: ${buttonHeight}px; height: ${buttonHeight}px; border-color: ${textColor}; border: solid ${textColor} 2px; border-radius: 5px; padding: 5px; margin: 0px ${marginTopElements}px; text-align: center;">
@@ -193,7 +231,7 @@ function fileManager(data) {
                     <label style="white-space: nowrap;">${virtualPath}</label>
                 </div>
                 <div class="${fileManagerName}" id="__goForward" style="width: ${buttonHeight}px; height: ${buttonHeight}px; border-color: ${textColor}; border: solid ${textColor} 2px; border-radius: 5px; padding: 5px; margin: 0px ${marginTopElements}px; text-align: center;">
-                <svg viewBox="0 0 512 512" style="fill: ${textColor}; width: ${buttonHeight}px; pointer-events: none;"><path style="pointer-events: none;" d="M0 256C0 397.4 114.6 512 256 512s256-114.6 256-256S397.4 0 256 0S0 114.6 0 256zM297 385c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l71-71L120 280c-13.3 0-24-10.7-24-24s10.7-24 24-24l214.1 0-71-71c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0L409 239c9.4 9.4 9.4 24.6 0 33.9L297 385z"/></svg>
+                    <svg viewBox="0 0 512 512" style="fill: ${textColor}; width: ${buttonHeight}px; pointer-events: none;"><path style="pointer-events: none;" d="M0 256C0 397.4 114.6 512 256 512s256-114.6 256-256S397.4 0 256 0S0 114.6 0 256zM297 385c-9.4 9.4-24.6 9.4-33.9 0s-9.4-24.6 0-33.9l71-71L120 280c-13.3 0-24-10.7-24-24s10.7-24 24-24l214.1 0-71-71c-9.4-9.4-9.4-24.6 0-33.9s24.6-9.4 33.9 0L409 239c9.4 9.4 9.4 24.6 0 33.9L297 385z"/></svg>
                 </div>
             </div>
             <div style="display: flex; width: 100%; height: 100%;">
@@ -219,15 +257,23 @@ function fileManager(data) {
                 switch (items[i].type) {
                     case "FOLDER":
                         $(`#_filesItemsStructure`).append(`<div style="width: ${cardWidth}px; height: ${cardHeight}px; background-color: ${cardFolderBackgroundColor}; margin-left: calc((5px + ${(margin * decal)}px) - ${decal}px); margin-bottom: 5px; border-radius: ${borderRadius}px;">
-                            <div style="display: flex;justify-content: center; align-items: center;">
-                                <label>${manageCardName(items[i].name)}</label>
+                            <div style="display: flex;">
+
+                                <div class="_activeCardChildren ${items[i].active ? "active" : "no-active"}" id="_FileStructure_${items[i].id}" style="width: 15px; height: 15px; padding: 0px; margin-left: 5px; display: flex; margin-top: 3px;">
+                                    ${items[i].active ? `<svg style="fill: ${textColor}; pointer-events: none; margin-left: 3px; margin-top: -6px;" viewBox="0 0 320 512"><path style="pointer-events: none;" d="M182.6 470.6c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-9.2-9.2-11.9-22.9-6.9-34.9s16.6-19.8 29.6-19.8H288c12.9 0 24.6 7.8 29.6 19.8s2.2 25.7-6.9 34.9l-128 128z"/></svg>` : `<svg viewBox="0 0 256 512" style="fill: ${textColor}; pointer-events: none; margin-left: 3px;">
+                                    <path style="pointer-events: none;" d="M9.4 278.6c-12.5-12.5-12.5-32.8 0-45.3l128-128c9.2-9.2 22.9-11.9 34.9-6.9s19.8 16.6 19.8 29.6l0 256c0 12.9-7.8 24.6-19.8 29.6s-25.7 2.2-34.9-6.9l-128-128z"/>
+                                </svg>`}
+                                </div>
+                                <div style="justify-content: center; align-items: center; width: 100%;">
+                                    <label>${manageCardName(items[i].name)}</label>
+                                </div>
                             </div>
-                            
-                            <!-- <div class="_deleteCard_" id="${items[i].id}" style="border-radius: 3px; width: 15px; height: 15px; border: solid ${borderColor} 2px; padding: 0px; float: right; margin-right: 5px; margin-top: -${cardTextHeight}px; display: flex;">
+                        
+                            <!-- <div class="_activeCardChildren" id="${items[i].id}" style="border-radius: 3px; width: 15px; height: 15px; border: solid ${borderColor} 2px; padding: 0px; float: right; margin-right: 5px; margin-top: -${cardTextHeight}px; display: flex;">
                                 <label style="font-size: 15px; padding: 0px; pointer-events: none; margin-left: 4px; margin-top: -2px;">x</label>
                             </div> -->
                         </div>`)
-                        if (items[i].items.length >= 1) {
+                        if (items[i].items.length >= 1 && items[i].active) {
                             recursive(items[i].items)
                         }
                         break
@@ -238,18 +284,26 @@ function fileManager(data) {
             margin--
         }
         recursive(items)
-        $('._deleteCard_').on('mouseenter', (e) => {
+        $('._activeCardChildren').on('mouseenter', (e) => {
             $("body").css('cursor', "pointer")
         })
-        $('._deleteCard_').on('mouseleave', (e) => {
+        $('._activeCardChildren').on('mouseleave', (e) => {
             $("body").css('cursor', "default")
         })
-        $('._deleteCard_').on('click', (e) => {
+        $('._activeCardChildren').on('click', (e) => {
             let elemId = e.target.id
             if (typeof (data.onDeleteCardFocus) !== "undefined") {
                 data.onDeleteCardFocus(getFolderById(+elemId))
             }
-            deleteFolderById(+elemId)
+            // deleteFolderById(+elemId)
+            if ($(`#${elemId}`).attr('class').split(" ")[1] === "active") {
+                $(`#${elemId}`).removeClass("active").addClass("no-active")
+                editFolderById(+elemId.split('_')[2], { active: false })
+            }
+            else {
+                $(`#${elemId}`).removeClass("no-active").addClass("active")
+                editFolderById(+elemId.split('_')[2], { active: true })
+            }
         })
     }
 
