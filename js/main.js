@@ -15,7 +15,7 @@ fileManager({
     buttonHeight: 20,
     cardTextHeight: 20,
     cardHeight: 25,
-    cardMaxTextLength: 7,
+    cardMaxTextLength: -1,
     cardWidth: 200,
     onAddFolderFocus: () => {
         console.log("Add Folder !")
