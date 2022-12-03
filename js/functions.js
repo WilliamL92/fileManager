@@ -22,8 +22,10 @@ function fileManager(data) {
     let cardTextHeight = data.cardTextHeight || 20
     let cardHeight = data.cardHeight || ""
     let cardMaxTextLength = data.cardMaxTextLength || -1
-    let cardBackGroundColorOnFocus = data.cardBackGroundColorOnFocus || "#A7D5D8"
-    let cardBackGroundColorOnClick = data.cardBackGroundColorOnClick || "#86ABAD"
+    let cardBackGroundColorOnFocus = data.cardBackGroundColorOnFocus || "#6A8E9A"
+    let cardBackGroundColorOnClick = data.cardBackGroundColorOnClick || "#1E99C4"
+    let fileCardTextHeight = data.fileCardTextHeight || 17
+    let fileCardMaxTextLength = data.fileCardMaxTextLength || 10
 
     let currentPath = 0
 
@@ -31,8 +33,32 @@ function fileManager(data) {
         $('#_virtualPath_').children().remove()
         $('#_virtualPath_').append(`<label style="white-space: nowrap;">${path}</label>`)
     }
-    const updateBackgroundColorByIdPath = (id) => {
 
+    const addNewFolder = (name) => {
+        itemId++
+        const item = getFolderById(currentPath)
+        item.items.push({
+            name: `${name}(${itemId})`,
+            type: "FOLDER",
+            id: itemId,
+            active: false,
+            items: []
+        })
+        updateFilesItemsStructure()
+        updateFilesItems(getFolderById(currentPath))
+    }
+
+    const updateFilesItems = (item) => {
+        const cardWidth = 70
+        $(`#_filesItems`).children().remove()
+        for (let i = 0; i < item.items.length; i++) {
+            $(`#_filesItems`).append(`<div style="width: ${cardWidth}px; height: ${cardWidth}px; margin: 10px 15px;">
+                <div style="width: ${cardWidth - 10}px; height: ${cardWidth - 10}px; margin-left: 5px; margin-top: 5px;">
+                    <svg style="fill: ${textColor}; width: ${cardWidth - 10}px; pointer-events: none;" viewBox="0 0 512 512"><path style="pointer-events: none;" d="M447.1 96h-172.1L226.7 50.75C214.7 38.74 198.5 32 181.5 32H63.1c-35.35 0-64 28.66-64 64v320c0 35.34 28.65 64 64 64h384c35.35 0 64-28.66 64-64V160C511.1 124.7 483.3 96 447.1 96zM463.1 416c0 8.824-7.178 16-16 16h-384c-8.822 0-16-7.176-16-16V96c0-8.824 7.178-16 16-16h117.5c4.273 0 8.293 1.664 11.31 4.688L255.1 144h192c8.822 0 16 7.176 16 16V416z"/></svg>
+                </div>
+                <label style="font-size: ${fileCardTextHeight}px;">${item.items[i].name.length > fileCardMaxTextLength ? `${item.items[i].name.substring(0, fileCardMaxTextLength)}...` : item.items[i].name}</label>
+            </div>`)
+        }
     }
 
     const editFolderById = (id, obj) => {
@@ -41,7 +67,9 @@ function fileManager(data) {
                 if (items[i].type === "FOLDER" && items[i].id === id) {
                     items[i] = { ...items[i], ...obj }
                 }
-                recursive(items[i].items)
+                else {
+                    recursive(items[i].items)
+                }
             }
         }
         if (id !== 0) {
@@ -87,7 +115,12 @@ function fileManager(data) {
                 }
             }
         }
-        recursive(items)
+        if (id === 0) {
+            findId = items
+        }
+        else {
+            recursive(items.items)
+        }
         return findId
     }
     const manageCardName = (text) => {
@@ -134,143 +167,7 @@ function fileManager(data) {
         id: 0,
         type: "FOLDER",
         active: true,
-        items: [
-            {
-                name: "1 elem",
-                id: 1,
-                type: "FOLDER",
-                active: true,
-                items: [
-                    {
-                        name: "2 elem",
-                        type: "FOLDER",
-                        id: 2,
-                        active: true,
-                        items: [
-                            {
-                                name: "3 elem ok !!",
-                                type: "FOLDER",
-                                id: 3,
-                                active: true,
-                                items: [{
-                                    name: "1 elem",
-                                    id: 10,
-                                    type: "FOLDER",
-                                    active: true,
-                                    items: [
-                                        {
-                                            name: "2 elem",
-                                            type: "FOLDER",
-                                            id: 11,
-                                            active: true,
-                                            items: [
-                                                {
-                                                    name: "3 elem ok !!",
-                                                    type: "FOLDER",
-                                                    id: 12,
-                                                    active: true,
-                                                    items: [{
-                                                        name: "1 elem",
-                                                        id: 13,
-                                                        type: "FOLDER",
-                                                        active: true,
-                                                        items: [
-                                                            {
-                                                                name: "2 elem",
-                                                                type: "FOLDER",
-                                                                id: 14,
-                                                                active: true,
-                                                                items: [
-                                                                    {
-                                                                        name: "3 elem ok !!",
-                                                                        type: "FOLDER",
-                                                                        id: 15,
-                                                                        active: true,
-                                                                        items: [{
-                                                                            name: "1 elem",
-                                                                            id: 16,
-                                                                            type: "FOLDER",
-                                                                            active: true,
-                                                                            items: [
-                                                                                {
-                                                                                    name: "2 elem",
-                                                                                    type: "FOLDER",
-                                                                                    id: 17,
-                                                                                    active: true,
-                                                                                    items: [
-                                                                                        {
-                                                                                            name: "3 elem ok !!",
-                                                                                            type: "FOLDER",
-                                                                                            id: 18,
-                                                                                            active: true,
-                                                                                            items: []
-                                                                                        }
-                                                                                    ]
-                                                                                }
-                                                                            ]
-                                                                        }]
-                                                                    }
-                                                                ]
-                                                            }
-                                                        ]
-                                                    }]
-                                                }
-                                            ]
-                                        }
-                                    ]
-                                }]
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
-                name: "1 autre elem",
-                type: "FOLDER",
-                id: 4,
-                active: false,
-                items: [
-                    {
-                        name: "2 autre :o elem",
-                        type: "FOLDER",
-                        id: 5,
-                        active: false,
-                        items: [
-                            {
-                                name: "3 finished ??",
-                                type: "FOLDER",
-                                id: 6,
-                                active: false,
-                                items: []
-                            }
-                        ]
-                    }
-                ]
-            },
-            {
-                name: "1autreee",
-                type: "FOLDER",
-                id: 7,
-                active: false,
-                items: [
-                    {
-                        name: ":)",
-                        type: "FOLDER",
-                        id: 8,
-                        active: false,
-                        items: [
-                            {
-                                name: "cc",
-                                type: "FOLDER",
-                                id: 9,
-                                active: false,
-                                items: []
-                            }
-                        ]
-                    }
-                ]
-            }
-        ]
+        items: []
     }
 
     let fileManagerName = "__Item__FileManager__"
@@ -300,7 +197,7 @@ function fileManager(data) {
                 </div>
                 <div style="border-radius: ${borderRadius}px; width: calc(100% - ${leftPanelWidth}px); height: calc(100% - ${topPanelHeight}px); box-sizing: border-box; text-align: center; display: flex; flex-flow: column; overflow: auto; background-color: ${rightBackgroundColor}; border-color: ${borderColor}; border: ${borderShow ? `solid ${borderColor} ${borderWidth}px` : "none"};">
                     <label>${titleRight}</label>
-                    <div id="_filesItems" style="width: 100%; overflow-y: scroll; height: 100%;"></div>
+                    <div id="_filesItems" style="width: 100%; overflow-y: scroll; height: 100%; display: flex; flex-wrap: wrap;"></div>
                 </div>
             </div>
         </div>`
@@ -313,7 +210,7 @@ function fileManager(data) {
         const addNewFolder = (id, active, name) => {
             $(`#_filesItemsStructure`).append(`<div id="_fileItemStructureElement_${id}" class="_fileItemStructureElement_" style="height: ${cardHeight}px; margin-left: calc((5px + ${(margin * decal)}px) - ${decal}px); margin-bottom: 5px; width: auto; padding: 0; width: max-content; ${currentPath === id ? `background-color:${cardBackGroundColorOnClick}` : ""}">
                 <div style="display: flex; pointer-events: none;">
-                    <div class="_activeCardChildren ${active ? "active" : "no-active"}" id="_FileStructure_${id}" style="padding: 0px; margin-left: 5px; pointer-events: auto; background-color:transparent; display: block; margin-top: -1px;">
+                    <div class="_activeCardChildren ${active ? "active" : "no-active"}" id="_FileStructure_${id}" style="padding: 0px; margin-left: 5px; pointer-events: auto; background-color:transparent; margin-top: -1px;">
                         ${active ? `<svg style="fill: ${textColor}; pointer-events: none; margin-left: 3px; width: 14px; height: 14px;" viewBox="0 0 320 512"><path style="pointer-events: none;" d="M182.6 470.6c-12.5 12.5-32.8 12.5-45.3 0l-128-128c-9.2-9.2-11.9-22.9-6.9-34.9s16.6-19.8 29.6-19.8H288c12.9 0 24.6 7.8 29.6 19.8s2.2 25.7-6.9 34.9l-128 128z"/></svg>` : `<svg viewBox="0 0 256 512" style="fill: ${textColor}; pointer-events: none; margin-left: 3px; width: 14px; height: 14px;">
                         <path style="pointer-events: none;" d="M9.4 278.6c-12.5-12.5-12.5-32.8 0-45.3l128-128c9.2-9.2 22.9-11.9 34.9-6.9s19.8 16.6 19.8 29.6l0 256c0 12.9-7.8 24.6-19.8 29.6s-25.7 2.2-34.9-6.9l-128-128z"/>
                     </svg>`}
@@ -321,7 +218,7 @@ function fileManager(data) {
                     <div style="margin-left: 5px;">
                         <svg style="fill: ${textColor}; pointer-events: none; width: 14px; height: 14px;" viewBox="0 0 512 512"><path style="pointer-events: none;" d="M447.1 96h-172.1L226.7 50.75C214.7 38.74 198.5 32 181.5 32H63.1c-35.35 0-64 28.66-64 64v320c0 35.34 28.65 64 64 64h384c35.35 0 64-28.66 64-64V160C511.1 124.7 483.3 96 447.1 96zM463.1 416c0 8.824-7.178 16-16 16h-384c-8.822 0-16-7.176-16-16V96c0-8.824 7.178-16 16-16h117.5c4.273 0 8.293 1.664 11.31 4.688L255.1 144h192c8.822 0 16 7.176 16 16V416z"/></svg>
                     </div>
-                    <label style="margin-left: 10px; pointer-events: none; white-space: nowrap; display: block;">${manageCardName(name)}</label>
+                    <label style="margin-left: 10px; pointer-events: none; white-space: nowrap; margin-right: 10px;">${manageCardName(name)}</label>
                 </div>
             </div>`)
         }
@@ -364,11 +261,12 @@ function fileManager(data) {
             }
         })
         $('._fileItemStructureElement_').on('click', (e) => {
-            const tempPath = +e.target.id.split('_').at(-1)
-            updateVirtualPath(getPathName(tempPath))
-            currentPath = tempPath
+            currentPath = +e.target.id.split('_').at(-1)
+            updateVirtualPath(getPathName(currentPath))
+            currentPath = currentPath
             $('._fileItemStructureElement_').css('backgroundColor', '')
             $(`#${e.target.id}`).css('background-color', cardBackGroundColorOnClick)
+            updateFilesItems(getFolderById(currentPath))
         })
         $('._fileItemStructureElement_').on('mouseenter', (e) => {
             let elemId = e.target.id
@@ -392,6 +290,7 @@ function fileManager(data) {
     }
     updateVirtualPath(getPathName(currentPath))
     updateFilesItemsStructure()
+    updateFilesItems(getFolderById(currentPath))
 
     $(`.${fileManagerName}`).on('mouseenter', (e) => {
         $("body").css('cursor', "pointer")
@@ -407,6 +306,7 @@ function fileManager(data) {
             case "__addFolder":
                 if (typeof (data.onAddFolderFocus) !== "undefined") {
                     data.onAddFolderFocus()
+                    addNewFolder("folder")
                 }
                 break
             case "__importFile":
