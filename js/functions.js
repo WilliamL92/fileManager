@@ -26,6 +26,10 @@ function fileManager(data) {
     let cardBackGroundColorOnClick = data.cardBackGroundColorOnClick || "#1E99C4"
     let fileCardTextHeight = data.fileCardTextHeight || 17
     let fileCardMaxTextLength = data.fileCardMaxTextLength || 10
+    let rightClickCardBackgroundColor = data.rightClickCardBackgroundColor || "#9B9B9B"
+    let rightClickCardTexts = data.rightClickCardTexts || ["rename", "delete", "copy", "cut"]
+    let rightClickCardTextsHeight = data.rightClickCardTextsHeight || 18
+    let rightClickCardTextSelection = data.rightClickCardTextSelection || "#16C7C4"
 
     let currentPath = 0
 
@@ -48,17 +52,53 @@ function fileManager(data) {
         updateFilesItems(getFolderById(currentPath))
     }
 
+    const showMenuRightClick = (target, mouse) => {
+        const idFolder = +target[0].id.split('_').at(-1)
+        const decal = 85
+        $(`#_menuSelection`).remove()
+        $(target).append(`<div style="background-color: ${rightClickCardBackgroundColor}; position: absolute; width: 150px; margin-left: ${Math.round(mouse.x - $("#_filesItems").scrollLeft() - $(target).offset().left)}px;margin-top: ${Math.round(mouse.y - $("#_filesItems").scrollTop() - $(target).offset().top) - decal}px; text-align: start;" id="_menuSelection">
+            ${rightClickCardTexts.map((e, i) => `<div style="width: 100%; position: relative;" id="_labelRightClickSelection_${i}" class="_labelRightClickSelection_"><label style="font-size: ${rightClickCardTextsHeight}px; margin-left: 15px; pointer-events: none;">${e}</label></div>`).join('')}
+        </div>`)
+        $('._labelRightClickSelection_').on('mouseenter', (e) => {
+            $('._labelRightClickSelection_').css('backgroundColor', '')
+            $(e.target).css('backgroundColor', rightClickCardTextSelection)
+        })
+        $('._labelRightClickSelection_').on('click', (e) => {
+            switch (+e.target.id.split('_').at(-1)) {
+                case 0:
+
+                    break
+                case 1:
+                    deleteFolderById(idFolder)
+                    updateFilesItemsStructure()
+                    updateFilesItems(getFolderById(currentPath))
+                    break
+            }
+        })
+    }
+
     const updateFilesItems = (item) => {
         const cardWidth = 70
         $(`#_filesItems`).children().remove()
         for (let i = 0; i < item.items.length; i++) {
-            $(`#_filesItems`).append(`<div style="width: ${cardWidth}px; height: ${cardWidth}px; margin: 10px 15px;">
-                <div style="width: ${cardWidth - 10}px; height: ${cardWidth - 10}px; margin-left: 5px; margin-top: 5px;">
+            $(`#_filesItems`).append(`<div style="width: ${cardWidth}px; height: ${cardWidth}px; margin: 10px 15px;" class="_filesItemsElementSelected_" id="_filesItemsElementSelected_${item.items[i].id}">
+                <div style="width: ${cardWidth - 10}px; height: ${cardWidth - 10}px; margin-left: 5px; margin-top: 5px; pointer-events: none;">
                     <svg style="fill: ${textColor}; width: ${cardWidth - 10}px; pointer-events: none;" viewBox="0 0 512 512"><path style="pointer-events: none;" d="M447.1 96h-172.1L226.7 50.75C214.7 38.74 198.5 32 181.5 32H63.1c-35.35 0-64 28.66-64 64v320c0 35.34 28.65 64 64 64h384c35.35 0 64-28.66 64-64V160C511.1 124.7 483.3 96 447.1 96zM463.1 416c0 8.824-7.178 16-16 16h-384c-8.822 0-16-7.176-16-16V96c0-8.824 7.178-16 16-16h117.5c4.273 0 8.293 1.664 11.31 4.688L255.1 144h192c8.822 0 16 7.176 16 16V416z"/></svg>
                 </div>
                 <label style="font-size: ${fileCardTextHeight}px;">${item.items[i].name.length > fileCardMaxTextLength ? `${item.items[i].name.substring(0, fileCardMaxTextLength)}...` : item.items[i].name}</label>
             </div>`)
         }
+        $(`._filesItemsElementSelected_`).on('mousedown', (e) => {
+            let elemRef = $(e.target)
+            if (elemRef.attr('class') !== "_filesItemsElementSelected_") {
+                elemRef = elemRef.parent()
+            }
+            switch (e.which) {
+                case 3:
+                    showMenuRightClick(elemRef, { x: e.pageX, y: e.pageY })
+                    break
+            }
+        })
     }
 
     const editFolderById = (id, obj) => {
@@ -82,7 +122,8 @@ function fileManager(data) {
     }
 
     const deleteFolderById = (id) => {
-        const _index = items.findIndex(e => e.id === id)
+
+        const _index = items.items.findIndex(e => e.id === id)
         if (_index === -1) {
             let lastRef = undefined
             const recursive = (items) => {
@@ -96,12 +137,11 @@ function fileManager(data) {
                     }
                 }
             }
-            recursive(items)
+            recursive(items.items)
         }
         else {
-            items.splice(_index, 1)
+            items.items.splice(_index, 1)
         }
-        updateFilesItemsStructure()
     }
     const getFolderById = (id) => {
         let findId = -1
@@ -172,7 +212,7 @@ function fileManager(data) {
 
     let fileManagerName = "__Item__FileManager__"
     $(`#${container}`).append(
-        `<div style="width: 100%; height: 100%; box-sizing: border-box; border-radius: ${borderRadius}px; border: ${outerBorderShow ? `solid ${borderColor} ${borderWidth}px;` : "none"}; font-size: ${textHeight}px; font-family: ${textStyle}; color: ${textColor}; border-color: ${borderColor}; user-select: none;;">
+        `<div oncontextmenu="return false;" style="width: 100%; height: 100%; box-sizing: border-box; border-radius: ${borderRadius}px; border: ${outerBorderShow ? `solid ${borderColor} ${borderWidth}px;` : "none"}; font-size: ${textHeight}px; font-family: ${textStyle}; color: ${textColor}; border-color: ${borderColor}; user-select: none;" id="_FileManager_">
             <div style="width: calc(100% + 1px); height: ${topPanelHeight}px; box-sizing: border-box; border-radius: ${borderRadius}px; display: flex; align-items: center; padding: 5px; background-color: ${topBackgroundColor}; border-color: ${borderColor}; border: ${borderShow ? `solid ${borderColor} ${borderWidth}px` : "none"};">
                 <label>${titleTop}</label>
                 <div class="${fileManagerName}" id="__addFolder" style="width: ${buttonHeight}px; height: ${buttonHeight}px; border-color: ${textColor}; border: solid ${textColor} 2px; border-radius: 5px; padding: 5px; margin: 0px ${marginTopElements}px; text-align: center;">
