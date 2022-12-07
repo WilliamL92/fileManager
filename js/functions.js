@@ -27,9 +27,10 @@ function fileManager(data) {
     let fileCardTextHeight = data.fileCardTextHeight || 17
     let fileCardMaxTextLength = data.fileCardMaxTextLength || 10
     let rightClickCardBackgroundColor = data.rightClickCardBackgroundColor || "#9B9B9B"
-    let rightClickCardTexts = data.rightClickCardTexts || ["rename", "delete", "copy", "cut"]
+    let rightClickCardTexts = data.rightClickCardTexts || ["rename", "delete"]
     let rightClickCardTextsHeight = data.rightClickCardTextsHeight || 18
     let rightClickCardTextSelection = data.rightClickCardTextSelection || "#16C7C4"
+    let cardItemsElementsBackgroundColor = data.cardItemsElementsBackgroundColor || "#19CDCA"
 
     let currentPath = 0
 
@@ -46,10 +47,34 @@ function fileManager(data) {
             type: "FOLDER",
             id: itemId,
             active: false,
+            rename: false,
             items: []
         })
         updateFilesItemsStructure()
         updateFilesItems(getFolderById(currentPath))
+    }
+
+    const setAllDefaultParameter = (obj) => {
+        items = { ...items, ...obj }
+        const recursive = (items) => {
+            for (let i = 0; i < items.length; i++) {
+                items[i] = { ...items[i], ...obj }
+                recursive(items[i].items)
+            }
+        }
+        recursive(items.items)
+    }
+
+    const selectItemElement = (element) => {
+        $('#_menuSelection').remove()
+        $('._filesItemsElementSelected_').parent().css('backgroundColor', '')
+        element.css('backgroundColor', cardItemsElementsBackgroundColor)
+    }
+
+    const renameItemByElement = (div) => {
+        const elemId = +div[0].id.split('_').at(-1)
+        editFolderById(elemId, { rename: true })
+        updateFilesItems(getFolderById(currentPath), elemId)
     }
 
     const showMenuRightClick = (target, mouse) => {
@@ -66,7 +91,7 @@ function fileManager(data) {
         $('._labelRightClickSelection_').on('click', (e) => {
             switch (+e.target.id.split('_').at(-1)) {
                 case 0:
-
+                    renameItemByElement(target)
                     break
                 case 1:
                     deleteFolderById(idFolder)
@@ -77,26 +102,45 @@ function fileManager(data) {
         })
     }
 
-    const updateFilesItems = (item) => {
+    const updateFilesItems = (item, selectedItem) => {
         const cardWidth = 70
         $(`#_filesItems`).children().remove()
         for (let i = 0; i < item.items.length; i++) {
-            $(`#_filesItems`).append(`<div style="width: ${cardWidth}px; height: ${cardWidth}px; margin: 10px 15px;" class="_filesItemsElementSelected_" id="_filesItemsElementSelected_${item.items[i].id}">
-                <div style="width: ${cardWidth - 10}px; height: ${cardWidth - 10}px; margin-left: 5px; margin-top: 5px; pointer-events: none;">
-                    <svg style="fill: ${textColor}; width: ${cardWidth - 10}px; pointer-events: none;" viewBox="0 0 512 512"><path style="pointer-events: none;" d="M447.1 96h-172.1L226.7 50.75C214.7 38.74 198.5 32 181.5 32H63.1c-35.35 0-64 28.66-64 64v320c0 35.34 28.65 64 64 64h384c35.35 0 64-28.66 64-64V160C511.1 124.7 483.3 96 447.1 96zM463.1 416c0 8.824-7.178 16-16 16h-384c-8.822 0-16-7.176-16-16V96c0-8.824 7.178-16 16-16h117.5c4.273 0 8.293 1.664 11.31 4.688L255.1 144h192c8.822 0 16 7.176 16 16V416z"/></svg>
+            $(`#_filesItems`).append(`<div style="height: min-content; padding-bottom: 5px;">
+                <div style="width: ${cardWidth}px; height: ${cardWidth}px; margin: 10px 15px;" class="_filesItemsElementSelected_" id="_filesItemsElementSelected_${item.items[i].id}">
+                    <div style="width: ${cardWidth - 10}px; height: ${cardWidth - 10}px; margin-left: 5px; margin-top: 5px; pointer-events: none;">
+                        <svg style="fill: ${textColor}; width: ${cardWidth - 10}px; pointer-events: none;" viewBox="0 0 512 512"><path style="pointer-events: none;" d="M447.1 96h-172.1L226.7 50.75C214.7 38.74 198.5 32 181.5 32H63.1c-35.35 0-64 28.66-64 64v320c0 35.34 28.65 64 64 64h384c35.35 0 64-28.66 64-64V160C511.1 124.7 483.3 96 447.1 96zM463.1 416c0 8.824-7.178 16-16 16h-384c-8.822 0-16-7.176-16-16V96c0-8.824 7.178-16 16-16h117.5c4.273 0 8.293 1.664 11.31 4.688L255.1 144h192c8.822 0 16 7.176 16 16V416z"/></svg>
+                    </div>
+                    ${item.items[i].rename ? `<input id="_renameTextElem_" type="text" value="${item.items[i].name}" style="width: 100%;"/>` : `<label style="font-size: ${fileCardTextHeight}px;">${item.items[i].name.length > fileCardMaxTextLength ? `${item.items[i].name.substring(0, fileCardMaxTextLength)}...` : item.items[i].name}</label>`}
                 </div>
-                <label style="font-size: ${fileCardTextHeight}px;">${item.items[i].name.length > fileCardMaxTextLength ? `${item.items[i].name.substring(0, fileCardMaxTextLength)}...` : item.items[i].name}</label>
             </div>`)
         }
+        $('#_renameTextElem_')[0]?.select()
         $(`._filesItemsElementSelected_`).on('mousedown', (e) => {
             let elemRef = $(e.target)
             if (elemRef.attr('class') !== "_filesItemsElementSelected_") {
                 elemRef = elemRef.parent()
             }
             switch (e.which) {
-                case 3:
-                    showMenuRightClick(elemRef, { x: e.pageX, y: e.pageY })
+                case 1:
+                    if ($(e.target).attr('class') !== "_labelRightClickSelection_") {
+                        console.log($(e.target).attr('class'))
+                        selectItemElement(elemRef.parent())
+                    }
                     break
+                case 3:
+                    if ($(e.target).attr('class') !== "_labelRightClickSelection_") {
+                        selectItemElement(elemRef.parent())
+                        showMenuRightClick(elemRef, { x: e.pageX, y: e.pageY })
+                    }
+                    break
+            }
+        })
+        $('#_renameTextElem_').on('keypress', (e) => {
+            if (e.keyCode === 13) {
+                editFolderById(selectedItem, { name: $('#_renameTextElem_').val(), rename: false })
+                updateFilesItemsStructure()
+                updateFilesItems(getFolderById(currentPath))
             }
         })
     }
@@ -125,14 +169,12 @@ function fileManager(data) {
 
         const _index = items.items.findIndex(e => e.id === id)
         if (_index === -1) {
-            let lastRef = undefined
             const recursive = (items) => {
                 for (let i = 0; i < items.length; i++) {
                     if (items[i].type === "FOLDER" && items[i].id === id) {
-                        lastRef.items = []
+                        items.splice(i, 1)
                     }
                     else {
-                        lastRef = items[i]
                         recursive(items[i].items)
                     }
                 }
@@ -207,7 +249,8 @@ function fileManager(data) {
         id: 0,
         type: "FOLDER",
         active: true,
-        items: []
+        items: [],
+        rename: false
     }
 
     let fileManagerName = "__Item__FileManager__"
@@ -364,6 +407,12 @@ function fileManager(data) {
                     data.onGoForwardFocus()
                 }
                 break
+        }
+    })
+    $('#_FileManager_').on('mousedown', (e) => {
+        if ($(e.target).attr('class') !== "_labelRightClickSelection_" && $(e.target).attr('class') !== "_filesItemsElementSelected_" && $(e.target).parent().attr('class') !== "_filesItemsElementSelected_") {
+            setAllDefaultParameter({ rename: false })
+            updateFilesItems(getFolderById(currentPath))
         }
     })
 
