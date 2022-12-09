@@ -78,10 +78,10 @@ function fileManager(data) {
             editFolderById(elemId, { renameElement: true })
         }
         else if (type === "elementStructure") {
-            editFolderById(elemId, { renameElementSructure: true })
+            editFolderById(elemId, { renameElementStructure: true })
         }
         updateFilesItems(getFolderById(currentPath), elemId)
-        updateFilesItemsStructure()
+        updateFilesItemsStructure(div)
     }
 
     const getTopFolderId = (id) => {
@@ -129,7 +129,6 @@ function fileManager(data) {
                         currentPath = idFolder
                         updateVirtualPath(getPathName(currentPath))
                     }
-                    console.log(idFolder)
                     deleteFolderById(idFolder)
                     updateFilesItemsStructure()
                     updateFilesItems(getFolderById(currentPath))
@@ -172,6 +171,7 @@ function fileManager(data) {
                     break
             }
         })
+        $('#_renameTextElem_').off('keypress')
         $('#_renameTextElem_').on('keypress', (e) => {
             if (e.keyCode === 13) {
                 editFolderById(selectedItem, { name: $('#_renameTextElem_').val(), renameElement: false })
@@ -322,7 +322,7 @@ function fileManager(data) {
         </div>`
     )
 
-    const updateFilesItemsStructure = () => {
+    const updateFilesItemsStructure = (div) => {
         $(`#_filesItemsStructure`).children().remove()
         let margin = 1
         const decal = 15
@@ -340,14 +340,13 @@ function fileManager(data) {
                     ${renameElementStructure ? `<input id="_renameTextElem_" type="text" value="${name}" style="width: 100%;"/>` : `<label style="margin-left: 10px; pointer-events: none; white-space: nowrap; margin-right: 10px; font-size: ${fileCardTextHeight}px;">${name.length > fileCardMaxTextLength ? `${name.substring(0, fileCardMaxTextLength)}...` : name}</label>`}
                 </div>
             </div>`)
-            console.log(renameElementStructure)
         }
         const recursive = (items) => {
             margin++
             for (let i = 0; i < items.length; i++) {
                 switch (items[i].type) {
                     case "FOLDER":
-                        addNewFolder(items[i].id, items[i].active, items[i].name, items[i].renameElementSructure)
+                        addNewFolder(items[i].id, items[i].active, items[i].name, items[i].renameElementStructure)
                         if (items[i].items.length >= 1 && items[i].active) {
                             recursive(items[i].items)
                         }
@@ -405,11 +404,12 @@ function fileManager(data) {
             $('#_menuSelection').remove()
         })
         $(`._fileItemStructureElement_`).on('mousedown', (e) => {
+            const _idFolder = +e.target.id.split('_').at(-1)
             if ($(e.target).attr('class').split(" ")[0] !== "_activeCardChildren") {
                 switch (e.which) {
                     case 1:
                         if ($(e.target).attr('class') !== "_labelRightClickSelection_") {
-                            currentPath = +e.target.id.split('_').at(-1)
+                            currentPath = _idFolder
                             updateVirtualPath(getPathName(currentPath))
                             currentPath = currentPath
                             $('._fileItemStructureElement_').css('backgroundColor', '')
@@ -424,7 +424,6 @@ function fileManager(data) {
                             // $(`#${e.target.id}`).css('background-color', cardBackGroundColorOnClick)
                             updateFilesItems(getFolderById(currentPath))
                             showMenuRightClick($(e.target), { x: Math.round(e.pageX - $("#_filesItemsStructure").scrollLeft() - $(e.target).offset().left), y: Math.round(e.pageY - $("#_filesItemsStructure").scrollTop() - $(e.target).offset().top) - decal }, +$(e.target)[0].id.split('_').at(-1))
-                            // showMenuRightClick($(e.target), { x: e.pageX, y: e.pageY }, getTopFolderId(+e.target.id.split('_').at(-1)))
                         }
                         else if (+$(e.target).attr('id').split('_')[2] === 0) {
                             $('#_menuSelection').remove()
@@ -433,6 +432,16 @@ function fileManager(data) {
                 }
             }
         })
+        if (typeof (div) !== "undefined" && div.attr('class') == "_fileItemStructureElement_") {
+            $('#_renameTextElem_').off('keypress')
+            $('#_renameTextElem_').on('keypress', (e) => {
+                if (e.keyCode === 13) {
+                    editFolderById(+div.attr('id').split('_')[2], { name: $('#_renameTextElem_').val(), renameElementStructure: false })
+                    updateFilesItemsStructure(div)
+                    updateFilesItems(getFolderById(currentPath))
+                }
+            })
+        }
     }
     updateVirtualPath(getPathName(currentPath))
     updateFilesItemsStructure()
