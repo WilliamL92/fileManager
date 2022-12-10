@@ -114,6 +114,9 @@ function fileManager(data) {
             $('._labelRightClickSelection_').css('backgroundColor', '')
             $(e.target).css('backgroundColor', rightClickCardTextSelection)
         })
+        $('._labelRightClickSelection_').on('mouseleave', (e) => {
+            $('._labelRightClickSelection_').css('backgroundColor', '')
+        })
         $('._labelRightClickSelection_').on('click', (e) => {
             switch (+e.target.id.split('_').at(-1)) {
                 case 0:
@@ -166,6 +169,8 @@ function fileManager(data) {
                     if ($(e.target).attr('class') !== "_labelRightClickSelection_") {
                         const decal = 85
                         selectItemElement(elemRef.parent())
+                        setAllDefaultParameter({ renameElementStructure: false })
+                        updateFilesItemsStructure()
                         showMenuRightClick(elemRef, { x: Math.round(e.pageX - $("#_filesItems").scrollLeft() - $(elemRef).offset().left), y: Math.round(e.pageY - $("#_filesItems").scrollTop() - $(elemRef).offset().top) - decal }, +elemRef[0].id.split('_').at(-1))
                     }
                     break
@@ -384,7 +389,7 @@ function fileManager(data) {
             if ($(e.target).attr('class').split(' ')[0] === "_activeCardChildren") {
                 elemId = $(e.target).parent().parent()[0].id
             }
-            if ($(`#${elemId}`).attr('class').split(' ')[0] !== "_activeCardChildren" && +elemId.split('_')[2] !== currentPath) {
+            if ($(`#${elemId}`).attr('class').split(' ')[0] !== "_activeCardChildren" && +elemId.split('_')[2] !== currentPath && $(`#${elemId}`).attr('class') !== "_labelRightClickSelection_") {
                 $(`._fileItemStructureElement_ > :not(#${elemId}):not(#_menuSelection)`).css('backgroundColor', '')
                 $(`#${elemId}`).css('backgroundColor', cardBackGroundColorOnFocus)
             }
@@ -421,7 +426,7 @@ function fileManager(data) {
                         if ($(e.target).attr('class') !== "_labelRightClickSelection_" && +$(e.target).attr('id').split('_')[2] !== 0) {
                             const decal = 25
                             $(`._fileItemStructureElement_ > :not(#_menuSelection)`).css('backgroundColor', '')
-                            // $(`#${e.target.id}`).css('background-color', cardBackGroundColorOnClick)
+                            setAllDefaultParameter({ renameElement: false })
                             updateFilesItems(getFolderById(currentPath))
                             showMenuRightClick($(e.target), { x: Math.round(e.pageX - $("#_filesItemsStructure").scrollLeft() - $(e.target).offset().left), y: Math.round(e.pageY - $("#_filesItemsStructure").scrollTop() - $(e.target).offset().top) - decal }, +$(e.target)[0].id.split('_').at(-1))
                         }
@@ -482,9 +487,10 @@ function fileManager(data) {
         }
     })
     $('#_FileManager_').on('mousedown', (e) => {
-        if ($(e.target).attr('class') !== "_labelRightClickSelection_" && $(e.target).attr('class') !== "_filesItemsElementSelected_" && $(e.target).parent().attr('class') !== "_filesItemsElementSelected_") {
-            setAllDefaultParameter({ renameElement: false })
+        if ($(e.target).attr('class') !== "_labelRightClickSelection_" && $(e.target).attr('class') !== "_filesItemsElementSelected_" && $(e.target).parent().attr('class') !== "_filesItemsElementSelected_" && $(e.target).attr('class') !== "_fileItemStructureElement_" && $(e.target).attr('class') !== "__Item__FileManager__") {
+            setAllDefaultParameter({ renameElement: false, renameElementStructure: false })
             updateFilesItems(getFolderById(currentPath))
+            updateFilesItemsStructure()
         }
     })
 
