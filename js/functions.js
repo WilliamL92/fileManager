@@ -26,6 +26,11 @@ function fileManager(data) {
     let cardBackGroundColorOnClick = data.cardBackGroundColorOnClick || "#1E99C4"
     let fileCardTextHeight = data.fileCardTextHeight || 17
     let fileCardMaxTextLength = data.fileCardMaxTextLength || 10
+    let rightClickCardBackgroundColor = data.rightClickCardBackgroundColor || "#9B9B9B"
+    let rightClickCardTexts = data.rightClickCardTexts || ["rename", "delete"]
+    let rightClickCardTextsHeight = data.rightClickCardTextsHeight || 18
+    let rightClickCardTextSelection = data.rightClickCardTextSelection || "#16C7C4"
+    let cardItemsElementsBackgroundColor = data.cardItemsElementsBackgroundColor || "#19CDCA"
 
     let currentPath = 0
 
@@ -42,23 +47,148 @@ function fileManager(data) {
             type: "FOLDER",
             id: itemId,
             active: false,
+            renameElement: false,
+            renameElementStructure: false,
             items: []
         })
         updateFilesItemsStructure()
         updateFilesItems(getFolderById(currentPath))
     }
 
-    const updateFilesItems = (item) => {
+    const setAllDefaultParameter = (obj) => {
+        items = { ...items, ...obj }
+        const recursive = (items) => {
+            for (let i = 0; i < items.length; i++) {
+                items[i] = { ...items[i], ...obj }
+                recursive(items[i].items)
+            }
+        }
+        recursive(items.items)
+    }
+
+    const selectItemElement = (element) => {
+        $('#_menuSelection').remove()
+        $('._filesItemsElementSelected_').parent().css('backgroundColor', '')
+        element.css('backgroundColor', cardItemsElementsBackgroundColor)
+    }
+
+    const renameItemByElement = (div, type) => {
+        const elemId = +div[0].id.split('_').at(-1)
+        if (type === "element") {
+            editFolderById(elemId, { renameElement: true })
+        }
+        else if (type === "elementStructure") {
+            editFolderById(elemId, { renameElementStructure: true })
+        }
+        updateFilesItems(getFolderById(currentPath), elemId)
+        updateFilesItemsStructure(div)
+    }
+
+    const getTopFolderId = (id) => {
+        let currentId = 0
+        let find = false
+        const recursive = (items, _id) => {
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].id !== id) {
+                    recursive(items[i].items, items[i].id)
+                }
+                else {
+                    currentId = _id
+                    find = true
+                }
+            }
+        }
+        recursive(items.items, 0)
+        if (!find) {
+            currentId = 0
+        }
+        return currentId
+    }
+
+    const showMenuRightClick = (target, pos, idFolder) => {
+        $(`#_menuSelection`).remove()
+        $(target).append(`<div style="background-color: ${rightClickCardBackgroundColor}; position: absolute; width: 150px; margin-left: ${pos.x}px;margin-top: ${pos.y}px; text-align: start;" id="_menuSelection">
+            ${rightClickCardTexts.map((e, i) => `<div style="width: 100%; position: relative;" id="_labelRightClickSelection_${i}" class="_labelRightClickSelection_"><label style="font-size: ${rightClickCardTextsHeight}px; margin-left: 15px; pointer-events: none;">${e}</label></div>`).join('')}
+        </div>`)
+        $('._labelRightClickSelection_').on('mouseenter', (e) => {
+            $('._labelRightClickSelection_').css('backgroundColor', '')
+            $(e.target).css('backgroundColor', rightClickCardTextSelection)
+        })
+        $('._labelRightClickSelection_').on('mouseleave', (e) => {
+            $('._labelRightClickSelection_').css('backgroundColor', '')
+        })
+        $('._labelRightClickSelection_').on('click', (e) => {
+            switch (+e.target.id.split('_').at(-1)) {
+                case 0:
+                    if (target.attr('class') === "_fileItemStructureElement_") {
+                        renameItemByElement(target, "elementStructure")
+                    }
+                    else {
+                        renameItemByElement(target, "element")
+                    }
+                    break
+                case 1:
+                    if (currentPath === idFolder) {
+                        currentPath = getTopFolderId(idFolder)
+                        updateVirtualPath(getPathName(currentPath))
+                    }
+                    deleteFolderById(idFolder)
+                    updateFilesItemsStructure()
+                    updateFilesItems(getFolderById(currentPath))
+                    break
+            }
+        })
+    }
+
+    const updateFilesItems = (item, selectedItem) => {
         const cardWidth = 70
         $(`#_filesItems`).children().remove()
         for (let i = 0; i < item.items.length; i++) {
-            $(`#_filesItems`).append(`<div style="width: ${cardWidth}px; height: ${cardWidth}px; margin: 10px 15px;">
-                <div style="width: ${cardWidth - 10}px; height: ${cardWidth - 10}px; margin-left: 5px; margin-top: 5px;">
-                    <svg style="fill: ${textColor}; width: ${cardWidth - 10}px; pointer-events: none;" viewBox="0 0 512 512"><path style="pointer-events: none;" d="M447.1 96h-172.1L226.7 50.75C214.7 38.74 198.5 32 181.5 32H63.1c-35.35 0-64 28.66-64 64v320c0 35.34 28.65 64 64 64h384c35.35 0 64-28.66 64-64V160C511.1 124.7 483.3 96 447.1 96zM463.1 416c0 8.824-7.178 16-16 16h-384c-8.822 0-16-7.176-16-16V96c0-8.824 7.178-16 16-16h117.5c4.273 0 8.293 1.664 11.31 4.688L255.1 144h192c8.822 0 16 7.176 16 16V416z"/></svg>
+            $(`#_filesItems`).append(`<div style="height: min-content; padding-bottom: 5px;">
+                <div style="width: ${cardWidth}px; height: ${cardWidth}px; margin: 10px 15px;" class="_filesItemsElementSelected_" id="_filesItemsElementSelected_${item.items[i].id}">
+                    <div style="width: ${cardWidth - 10}px; height: ${cardWidth - 10}px; margin-left: 5px; margin-top: 5px; pointer-events: none;">
+                        <svg style="fill: ${textColor}; width: ${cardWidth - 10}px; pointer-events: none;" viewBox="0 0 512 512"><path style="pointer-events: none;" d="M447.1 96h-172.1L226.7 50.75C214.7 38.74 198.5 32 181.5 32H63.1c-35.35 0-64 28.66-64 64v320c0 35.34 28.65 64 64 64h384c35.35 0 64-28.66 64-64V160C511.1 124.7 483.3 96 447.1 96zM463.1 416c0 8.824-7.178 16-16 16h-384c-8.822 0-16-7.176-16-16V96c0-8.824 7.178-16 16-16h117.5c4.273 0 8.293 1.664 11.31 4.688L255.1 144h192c8.822 0 16 7.176 16 16V416z"/></svg>
+                    </div>
+                    ${item.items[i].renameElement ? `<input id="_renameTextElem_" type="text" value="${item.items[i].name}" style="width: 100%;"/>` : `<label style="font-size: ${fileCardTextHeight}px;">${item.items[i].name.length > fileCardMaxTextLength ? `${item.items[i].name.substring(0, fileCardMaxTextLength)}...` : item.items[i].name}</label>`}
                 </div>
-                <label style="font-size: ${fileCardTextHeight}px;">${item.items[i].name.length > fileCardMaxTextLength ? `${item.items[i].name.substring(0, fileCardMaxTextLength)}...` : item.items[i].name}</label>
             </div>`)
         }
+        $('#_renameTextElem_')[0]?.select()
+        $(`._filesItemsElementSelected_`).on('mousedown', (e) => {
+            let elemRef = $(e.target)
+            let _id = elemRef.attr('id')
+            if (elemRef.attr('class') !== "_filesItemsElementSelected_") {
+                elemRef = elemRef.parent()
+                _id = elemRef.parent().attr('id')
+            }
+            switch (e.which) {
+                case 1:
+                    if ($(e.target).attr('class') !== "_labelRightClickSelection_") {
+                        setAllDefaultParameter({ renameElement: false, renameElementStructure: false })
+                        updateFilesItems(getFolderById(currentPath))
+                        updateFilesItemsStructure()
+                        selectItemElement($(`#${_id}`).parent())
+                    }
+                    break
+                case 3:
+                    if ($(e.target).attr('class') !== "_labelRightClickSelection_") {
+                        const decal = 85
+                        selectItemElement(elemRef.parent())
+                        setAllDefaultParameter({ renameElement: false, renameElementStructure: false })
+                        updateFilesItemsStructure()
+                        showMenuRightClick(elemRef, { x: Math.round(e.pageX - $("#_filesItems").scrollLeft() - $(elemRef).offset().left), y: Math.round(e.pageY - $("#_filesItems").scrollTop() - $(elemRef).offset().top) - decal }, +elemRef[0].id.split('_').at(-1))
+                    }
+                    break
+            }
+        })
+        $('#_renameTextElem_').off('keypress')
+        $('#_renameTextElem_').on('keypress', (e) => {
+            if (e.keyCode === 13) {
+                editFolderById(selectedItem, { name: $('#_renameTextElem_').val(), renameElement: false })
+                updateFilesItemsStructure()
+                updateFilesItems(getFolderById(currentPath))
+            }
+        })
     }
 
     const editFolderById = (id, obj) => {
@@ -82,26 +212,23 @@ function fileManager(data) {
     }
 
     const deleteFolderById = (id) => {
-        const _index = items.findIndex(e => e.id === id)
+        const _index = items.items.findIndex(e => e.id === id)
         if (_index === -1) {
-            let lastRef = undefined
             const recursive = (items) => {
                 for (let i = 0; i < items.length; i++) {
                     if (items[i].type === "FOLDER" && items[i].id === id) {
-                        lastRef.items = []
+                        items.splice(i, 1)
                     }
                     else {
-                        lastRef = items[i]
                         recursive(items[i].items)
                     }
                 }
             }
-            recursive(items)
+            recursive(items.items)
         }
         else {
-            items.splice(_index, 1)
+            items.items.splice(_index, 1)
         }
-        updateFilesItemsStructure()
     }
     const getFolderById = (id) => {
         let findId = -1
@@ -167,12 +294,14 @@ function fileManager(data) {
         id: 0,
         type: "FOLDER",
         active: true,
-        items: []
+        items: [],
+        renameElement: false,
+        renameElementStructure: false
     }
 
     let fileManagerName = "__Item__FileManager__"
     $(`#${container}`).append(
-        `<div style="width: 100%; height: 100%; box-sizing: border-box; border-radius: ${borderRadius}px; border: ${outerBorderShow ? `solid ${borderColor} ${borderWidth}px;` : "none"}; font-size: ${textHeight}px; font-family: ${textStyle}; color: ${textColor}; border-color: ${borderColor}; user-select: none;;">
+        `<div oncontextmenu="return false;" style="width: 100%; height: 100%; box-sizing: border-box; border-radius: ${borderRadius}px; border: ${outerBorderShow ? `solid ${borderColor} ${borderWidth}px;` : "none"}; font-size: ${textHeight}px; font-family: ${textStyle}; color: ${textColor}; border-color: ${borderColor}; user-select: none;" id="_FileManager_">
             <div style="width: calc(100% + 1px); height: ${topPanelHeight}px; box-sizing: border-box; border-radius: ${borderRadius}px; display: flex; align-items: center; padding: 5px; background-color: ${topBackgroundColor}; border-color: ${borderColor}; border: ${borderShow ? `solid ${borderColor} ${borderWidth}px` : "none"};">
                 <label>${titleTop}</label>
                 <div class="${fileManagerName}" id="__addFolder" style="width: ${buttonHeight}px; height: ${buttonHeight}px; border-color: ${textColor}; border: solid ${textColor} 2px; border-radius: 5px; padding: 5px; margin: 0px ${marginTopElements}px; text-align: center;">
@@ -203,11 +332,11 @@ function fileManager(data) {
         </div>`
     )
 
-    const updateFilesItemsStructure = () => {
+    const updateFilesItemsStructure = (div) => {
         $(`#_filesItemsStructure`).children().remove()
         let margin = 1
         const decal = 15
-        const addNewFolder = (id, active, name) => {
+        const addNewFolder = (id, active, name, renameElementStructure) => {
             $(`#_filesItemsStructure`).append(`<div id="_fileItemStructureElement_${id}" class="_fileItemStructureElement_" style="height: ${cardHeight}px; margin-left: calc((5px + ${(margin * decal)}px) - ${decal}px); margin-bottom: 5px; width: auto; padding: 0; width: max-content; ${currentPath === id ? `background-color:${cardBackGroundColorOnClick}` : ""}">
                 <div style="display: flex; pointer-events: none;">
                     <div class="_activeCardChildren ${active ? "active" : "no-active"}" id="_FileStructure_${id}" style="padding: 0px; margin-left: 5px; pointer-events: auto; background-color:transparent; margin-top: -1px;">
@@ -218,7 +347,7 @@ function fileManager(data) {
                     <div style="margin-left: 5px;">
                         <svg style="fill: ${textColor}; pointer-events: none; width: 14px; height: 14px;" viewBox="0 0 512 512"><path style="pointer-events: none;" d="M447.1 96h-172.1L226.7 50.75C214.7 38.74 198.5 32 181.5 32H63.1c-35.35 0-64 28.66-64 64v320c0 35.34 28.65 64 64 64h384c35.35 0 64-28.66 64-64V160C511.1 124.7 483.3 96 447.1 96zM463.1 416c0 8.824-7.178 16-16 16h-384c-8.822 0-16-7.176-16-16V96c0-8.824 7.178-16 16-16h117.5c4.273 0 8.293 1.664 11.31 4.688L255.1 144h192c8.822 0 16 7.176 16 16V416z"/></svg>
                     </div>
-                    <label style="margin-left: 10px; pointer-events: none; white-space: nowrap; margin-right: 10px;">${manageCardName(name)}</label>
+                    ${renameElementStructure ? `<input id="_renameTextElem_" type="text" value="${name}" style="width: 100%;"/>` : `<label style="margin-left: 10px; pointer-events: none; white-space: nowrap; margin-right: 10px; font-size: ${fileCardTextHeight}px;">${name.length > fileCardMaxTextLength ? `${name.substring(0, fileCardMaxTextLength)}...` : name}</label>`}
                 </div>
             </div>`)
         }
@@ -227,7 +356,7 @@ function fileManager(data) {
             for (let i = 0; i < items.length; i++) {
                 switch (items[i].type) {
                     case "FOLDER":
-                        addNewFolder(items[i].id, items[i].active, items[i].name)
+                        addNewFolder(items[i].id, items[i].active, items[i].name, items[i].renameElementStructure)
                         if (items[i].items.length >= 1 && items[i].active) {
                             recursive(items[i].items)
                         }
@@ -248,9 +377,9 @@ function fileManager(data) {
         $('._activeCardChildren').on('mouseleave', (e) => {
             $("body").css('cursor', "default")
         })
-        $('._activeCardChildren').on('click', (e) => {
+        $('._activeCardChildren').on('mousedown', (e) => {
             let elemId = e.target.id
-            // deleteFolderById(+elemId)
+            $('#_menuSelection').remove()
             if ($(`#${elemId}`).attr('class').split(" ")[1] === "active") {
                 $(`#${elemId}`).removeClass("active").addClass("no-active")
                 editFolderById(+elemId.split('_')[2], { active: false })
@@ -260,21 +389,13 @@ function fileManager(data) {
                 editFolderById(+elemId.split('_')[2], { active: true })
             }
         })
-        $('._fileItemStructureElement_').on('click', (e) => {
-            currentPath = +e.target.id.split('_').at(-1)
-            updateVirtualPath(getPathName(currentPath))
-            currentPath = currentPath
-            $('._fileItemStructureElement_').css('backgroundColor', '')
-            $(`#${e.target.id}`).css('background-color', cardBackGroundColorOnClick)
-            updateFilesItems(getFolderById(currentPath))
-        })
         $('._fileItemStructureElement_').on('mouseenter', (e) => {
             let elemId = e.target.id
             if ($(e.target).attr('class').split(' ')[0] === "_activeCardChildren") {
                 elemId = $(e.target).parent().parent()[0].id
             }
-            if ($(`#${elemId}`).attr('class').split(' ')[0] !== "_activeCardChildren" && +elemId.split('_')[2] !== currentPath) {
-                $(`._fileItemStructureElement_ > :not(#${elemId})`).css('backgroundColor', '')
+            if ($(`#${elemId}`).attr('class').split(' ')[0] !== "_activeCardChildren" && +elemId.split('_')[2] !== currentPath && $(`#${elemId}`).attr('class') !== "_labelRightClickSelection_") {
+                $(`._fileItemStructureElement_ > :not(#${elemId}):not(#_menuSelection)`).css('backgroundColor', '')
                 $(`#${elemId}`).css('backgroundColor', cardBackGroundColorOnFocus)
             }
         })
@@ -287,6 +408,52 @@ function fileManager(data) {
                 $(`#${elemId}`).css('backgroundColor', "")
             }
         })
+        //------------------
+        $('#_renameTextElem_')[0]?.select()
+        $('#_filesItemsStructure > :not(._fileItemStructureElement_)').on('mousedown', (e) => {
+            $('#_menuSelection').remove()
+        })
+        $(`._fileItemStructureElement_`).on('mousedown', (e) => {
+            const _idFolder = +e.target.id.split('_').at(-1)
+            if ($(e.target).attr('class').split(" ")[0] !== "_activeCardChildren") {
+                switch (e.which) {
+                    case 1:
+                        if ($(e.target).attr('class') !== "_labelRightClickSelection_") {
+                            currentPath = _idFolder
+                            updateVirtualPath(getPathName(currentPath))
+                            setAllDefaultParameter({ renameElement: false, renameElementStructure: false })
+                            currentPath = currentPath
+                            updateFilesItemsStructure()
+                            $('._fileItemStructureElement_').css('backgroundColor', '')
+                            $(`#${e.target.id}`).css('backgroundColor', cardBackGroundColorOnClick)
+                            updateFilesItems(getFolderById(currentPath))
+                        }
+                        break
+                    case 3:
+                        if ($(e.target).attr('class') !== "_labelRightClickSelection_" && +$(e.target).attr('id').split('_')[2] !== 0) {
+                            const decal = 25
+                            $(`._fileItemStructureElement_ > :not(#_menuSelection)`).css('backgroundColor', '')
+                            setAllDefaultParameter({ renameElement: false, renameElementStructure: false })
+                            updateFilesItems(getFolderById(currentPath))
+                            showMenuRightClick($(e.target), { x: Math.round(e.pageX - $("#_filesItemsStructure").scrollLeft() - $(e.target).offset().left), y: Math.round(e.pageY - $("#_filesItemsStructure").scrollTop() - $(e.target).offset().top) - decal }, +$(e.target)[0].id.split('_').at(-1))
+                        }
+                        else if (+$(e.target).attr('id').split('_')[2] === 0) {
+                            $('#_menuSelection').remove()
+                        }
+                        break
+                }
+            }
+        })
+        if (typeof (div) !== "undefined" && div.attr('class') == "_fileItemStructureElement_") {
+            $('#_renameTextElem_').off('keypress')
+            $('#_renameTextElem_').on('keypress', (e) => {
+                if (e.keyCode === 13) {
+                    editFolderById(+div.attr('id').split('_')[2], { name: $('#_renameTextElem_').val(), renameElementStructure: false })
+                    updateFilesItemsStructure(div)
+                    updateFilesItems(getFolderById(currentPath))
+                }
+            })
+        }
     }
     updateVirtualPath(getPathName(currentPath))
     updateFilesItemsStructure()
@@ -324,6 +491,13 @@ function fileManager(data) {
                     data.onGoForwardFocus()
                 }
                 break
+        }
+    })
+    $('#_FileManager_').on('mousedown', (e) => {
+        if ($(e.target).attr('class') !== "_labelRightClickSelection_" && $(e.target).attr('class') !== "_filesItemsElementSelected_" && $(e.target).parent().attr('class') !== "_filesItemsElementSelected_" && $(e.target).attr('class') !== "_fileItemStructureElement_" && $(e.target).attr('class') !== "__Item__FileManager__") {
+            setAllDefaultParameter({ renameElement: false, renameElementStructure: false })
+            updateFilesItems(getFolderById(currentPath))
+            updateFilesItemsStructure()
         }
     })
 
