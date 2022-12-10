@@ -128,8 +128,8 @@ function fileManager(data) {
                     }
                     break
                 case 1:
-                    if (currentPath === +$(target).attr('id').at(-1)) {
-                        currentPath = idFolder
+                    if (currentPath === idFolder) {
+                        currentPath = getTopFolderId(idFolder)
                         updateVirtualPath(getPathName(currentPath))
                     }
                     deleteFolderById(idFolder)
@@ -156,20 +156,25 @@ function fileManager(data) {
         $('#_renameTextElem_')[0]?.select()
         $(`._filesItemsElementSelected_`).on('mousedown', (e) => {
             let elemRef = $(e.target)
+            let _id = elemRef.attr('id')
             if (elemRef.attr('class') !== "_filesItemsElementSelected_") {
                 elemRef = elemRef.parent()
+                _id = elemRef.parent().attr('id')
             }
             switch (e.which) {
                 case 1:
                     if ($(e.target).attr('class') !== "_labelRightClickSelection_") {
-                        selectItemElement(elemRef.parent())
+                        setAllDefaultParameter({ renameElement: false, renameElementStructure: false })
+                        updateFilesItems(getFolderById(currentPath))
+                        updateFilesItemsStructure()
+                        selectItemElement($(`#${_id}`).parent())
                     }
                     break
                 case 3:
                     if ($(e.target).attr('class') !== "_labelRightClickSelection_") {
                         const decal = 85
                         selectItemElement(elemRef.parent())
-                        setAllDefaultParameter({ renameElementStructure: false })
+                        setAllDefaultParameter({ renameElement: false, renameElementStructure: false })
                         updateFilesItemsStructure()
                         showMenuRightClick(elemRef, { x: Math.round(e.pageX - $("#_filesItems").scrollLeft() - $(elemRef).offset().left), y: Math.round(e.pageY - $("#_filesItems").scrollTop() - $(elemRef).offset().top) - decal }, +elemRef[0].id.split('_').at(-1))
                     }
@@ -416,9 +421,11 @@ function fileManager(data) {
                         if ($(e.target).attr('class') !== "_labelRightClickSelection_") {
                             currentPath = _idFolder
                             updateVirtualPath(getPathName(currentPath))
+                            setAllDefaultParameter({ renameElement: false, renameElementStructure: false })
                             currentPath = currentPath
+                            updateFilesItemsStructure()
                             $('._fileItemStructureElement_').css('backgroundColor', '')
-                            $(`#${e.target.id}`).css('background-color', cardBackGroundColorOnClick)
+                            $(`#${e.target.id}`).css('backgroundColor', cardBackGroundColorOnClick)
                             updateFilesItems(getFolderById(currentPath))
                         }
                         break
@@ -426,7 +433,7 @@ function fileManager(data) {
                         if ($(e.target).attr('class') !== "_labelRightClickSelection_" && +$(e.target).attr('id').split('_')[2] !== 0) {
                             const decal = 25
                             $(`._fileItemStructureElement_ > :not(#_menuSelection)`).css('backgroundColor', '')
-                            setAllDefaultParameter({ renameElement: false })
+                            setAllDefaultParameter({ renameElement: false, renameElementStructure: false })
                             updateFilesItems(getFolderById(currentPath))
                             showMenuRightClick($(e.target), { x: Math.round(e.pageX - $("#_filesItemsStructure").scrollLeft() - $(e.target).offset().left), y: Math.round(e.pageY - $("#_filesItemsStructure").scrollTop() - $(e.target).offset().top) - decal }, +$(e.target)[0].id.split('_').at(-1))
                         }
